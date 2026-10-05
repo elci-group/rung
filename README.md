@@ -176,7 +176,7 @@ can permit a release. Decisions are schema-versioned in JSON and JSONL.
 
 Git commit IDs make the baseline immutable, but the caller must choose a
 trusted ref. Protect that ref in the forge: `main` on this repository requires
-a pull request, one approving review, and the `CI / rust` status check.
+a pull request, one approving review, and the `rust` status check.
 Rung still cannot discover that protection by itself.
 
 The worktree walker and the Git tree walker both reject symbolic links,

@@ -17,7 +17,7 @@ Add an integration fixture for changes to baseline selection, governance,
 authorization, or exit semantics. Never commit a private signing key.
 
 Changes to `main` land through a pull request. Use the pull request template.
-One approving review is required, and the `CI / rust` check must pass. Do not
+One approving review is required, and the `rust` check must pass. Do not
 force-push `main`. Leave analyzer and daemon state untracked: `.uni/`,
 `.kaptaind/`, `.lwoodz/`, `.crush/`, and generated `lwoodz.toml`, `poka.toml`,
 and `traci.toml`.
