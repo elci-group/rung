@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "rung audit access",
+  "description": "One JSONL record in .rung/audit/access.jsonl. schema_version 1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "timestamp_unix_ms",
+    "action",
+    "baseline_revision",
+    "subject"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "kind": { "const": "access" },
+    "timestamp_unix_ms": { "type": "integer", "minimum": 0 },
+    "action": { "enum": ["check", "authorize"] },
+    "baseline_revision": { "type": "string" },
+    "subject": { "type": ["string", "null"] }
+  }
+}

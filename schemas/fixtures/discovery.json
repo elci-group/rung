@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "kind": "discovery",
+  "candidates": [
+    {
+      "suggested_id": "api-feature-a",
+      "name": "feature_a",
+      "kind": "public_api",
+      "evidence": [
+        {
+          "kind": "symbol",
+          "value": "feature_a",
+          "weight": 1
+        }
+      ],
+      "locations": ["src/lib.rs"]
+    }
+  ]
+}

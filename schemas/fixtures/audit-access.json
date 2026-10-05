@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "kind": "access",
+  "timestamp_unix_ms": 1780000000000,
+  "action": "check",
+  "baseline_revision": "0123456789abcdef0123456789abcdef01234567",
+  "subject": null
+}

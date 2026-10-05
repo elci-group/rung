@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "rung discovery",
+  "description": "JSON object printed by `rung --format json scan`. schema_version 1. Scan does not protect.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "candidates"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "kind": { "const": "discovery" },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["suggested_id", "name", "kind", "evidence", "locations"],
+        "properties": {
+          "suggested_id": { "type": "string" },
+          "name": { "type": "string" },
+          "kind": {
+            "enum": [
+              "public_api",
+              "cli_command",
+              "cargo_feature",
+              "test",
+              "route",
+              "configuration"
+            ]
+          },
+          "evidence": { "type": "array" },
+          "locations": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

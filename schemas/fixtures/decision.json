@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "outcome": "block",
+  "baseline_revision": "0123456789abcdef0123456789abcdef01234567",
+  "candidate_digest": "candidate-digest",
+  "ledger_digest": "ledger-digest",
+  "policy_digest": "policy-digest",
+  "governance_violations": [],
+  "violations": [
+    {
+      "id": "RUNG-VIOLATION-CAP-A",
+      "capability_id": "CAP-A",
+      "rung": "r2",
+      "baseline_revision": "0123456789abcdef0123456789abcdef01234567",
+      "candidate_digest": "candidate-digest",
+      "confidence": 0,
+      "missing_evidence": [
+        {
+          "kind": "symbol",
+          "value": "feature_a",
+          "found": false,
+          "weight": 1
+        }
+      ],
+      "reason": "protected capability absent"
+    }
+  ],
+  "assessments": [
+    {
+      "capability_id": "CAP-A",
+      "baseline": "present",
+      "candidate": "absent",
+      "confidence": 0,
+      "observations": [
+        {
+          "kind": "symbol",
+          "value": "feature_a",
+          "found": false,
+          "weight": 1
+        }
+      ],
+      "authorized": false,
+      "reason": "below threshold"
+    }
+  ]
+}

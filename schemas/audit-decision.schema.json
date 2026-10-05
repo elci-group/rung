@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "rung audit decision",
+  "description": "One JSONL record in .rung/audit/decisions.jsonl. schema_version 1.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "kind",
+    "timestamp_unix_ms",
+    "outcome",
+    "baseline_revision",
+    "candidate_digest",
+    "violation_ids",
+    "governance_violations"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "kind": { "const": "decision" },
+    "timestamp_unix_ms": { "type": "integer", "minimum": 0 },
+    "outcome": {
+      "enum": ["allow", "allow_with_warnings", "require_review", "block"]
+    },
+    "baseline_revision": { "type": "string" },
+    "candidate_digest": { "type": "string" },
+    "violation_ids": { "type": "array", "items": { "type": "string" } },
+    "governance_violations": { "type": "array", "items": { "type": "string" } }
+  }
+}
