@@ -27,5 +27,7 @@ The production acceptance gate is `deliver --spec deliver.toml --strict`,
 which runs `cargo audit` and `cargo deny check licenses advisories` with the
 fmt, clippy, test, and doc gates.
 Historical advisory counts attached to a crate name are not a finding against
-the locked version. Signature, Git, and digest crates stay in the build.
+the locked version. `ed25519-dalek`, `git2`, `sha2`, `serde`, and `tracing`
+stay in the build: they implement signatures, repository observation, digests,
+and decision reports. Vendored libgit2 stays off.
 
