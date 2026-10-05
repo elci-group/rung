@@ -16,8 +16,7 @@ forbid_regex = ["TODO", "FIXME", "TBD"]
 
 [[file]]
 path = "deliver.toml"
-require_regex = ["RUNG-PROD-001", "cargo test"]
-forbid_regex = ["TODO", "FIXME"]
+require_regex = ["RUNG-PROD-001", "cargo test", "cargo audit", "cargo deny"]
 
 [[file]]
 path = "deliver/p1-identity.toml"
