@@ -1,0 +1,17 @@
+# P3 — pilot transcripts. Close with: deliver --spec deliver/p3-pilot.toml --strict
+
+[metadata]
+program = "RUNG-PROD-001"
+phase = "P3"
+
+[[file]]
+path = "crates/rung-cli/tests/production_pilot.rs"
+require_regex = ["production_pilot_four_transcripts", "candidate_digest"]
+forbid_regex = ["unwrap(", "expect(", "panic!", "TODO", "FIXME"]
+
+[[command]]
+name = "production pilot"
+cmd = ["cargo", "test", "--workspace", "--all-features", "production_pilot_four_transcripts"]
+expect_exit = 0
+timeout_secs = 600
+stdout_contains = ["test result: ok"]

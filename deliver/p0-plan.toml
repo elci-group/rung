@@ -1,0 +1,32 @@
+# P0 — plan. Close with: deliver --spec deliver/p0-plan.toml --strict
+
+[metadata]
+program = "RUNG-PROD-001"
+phase = "P0"
+
+[[file]]
+path = "docs/production/DIRECTIVE.md"
+require_regex = ["RUNG-PROD-001", "deliver --spec deliver.toml --strict", "93a90de52b18e9e0a1dd7e89988d2d055c91cae6"]
+forbid_regex = ["TODO", "FIXME", "TBD"]
+
+[[file]]
+path = "docs/production/ROADMAP.md"
+require_regex = ["RUNG-PROD-001", "deliver/p0-plan.toml", "deliver/p3-pilot.toml"]
+forbid_regex = ["TODO", "FIXME", "TBD"]
+
+[[file]]
+path = "deliver.toml"
+require_regex = ["RUNG-PROD-001", "cargo test"]
+forbid_regex = ["TODO", "FIXME"]
+
+[[file]]
+path = "deliver/p1-identity.toml"
+require_regex = ["RUNG-PROD-001", "phase = \"P1\""]
+
+[[file]]
+path = "deliver/p2-contract.toml"
+require_regex = ["RUNG-PROD-001", "phase = \"P2\""]
+
+[[file]]
+path = "deliver/p3-pilot.toml"
+require_regex = ["RUNG-PROD-001", "production_pilot"]

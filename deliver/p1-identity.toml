@@ -1,0 +1,34 @@
+# P1 — identity. Close with: deliver --spec deliver/p1-identity.toml --strict
+
+[metadata]
+program = "RUNG-PROD-001"
+phase = "P1"
+
+[[file]]
+path = "Cargo.toml"
+require_regex = [
+  'repository = "https://github.com/elci-group/rung"',
+  'description = "Capability-preservation gate. Protected losses require a signed authorization against an accepted Git baseline."',
+]
+
+[[file]]
+path = "crates/rung-model/Cargo.toml"
+require_regex = ["description.workspace = true", "repository.workspace = true"]
+
+[[file]]
+path = "crates/rung-core/Cargo.toml"
+require_regex = ["description.workspace = true", "repository.workspace = true"]
+
+[[file]]
+path = "crates/rung-cli/Cargo.toml"
+require_regex = ["description.workspace = true", "repository.workspace = true"]
+
+[[file]]
+path = "README.md"
+require_regex = [
+  "cargo-semver-checks",
+  "cargo-public-api",
+  "rung-core",
+  "Do not publish this workspace",
+]
+forbid_regex = ["TODO", "FIXME"]

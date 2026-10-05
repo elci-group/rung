@@ -1,0 +1,46 @@
+# P2 — schema contracts. Close with: deliver --spec deliver/p2-contract.toml --strict
+
+[metadata]
+program = "RUNG-PROD-001"
+phase = "P2"
+
+[[file]]
+path = "schemas/decision.schema.json"
+require_json_keys = ["title", "type", "required", "properties"]
+require_regex = ["\"schema_version\"", "\"candidate_digest\""]
+
+[[file]]
+path = "schemas/discovery.schema.json"
+require_json_keys = ["title", "type", "required", "properties"]
+require_regex = ["\"discovery\"", "\"candidates\""]
+
+[[file]]
+path = "schemas/audit-decision.schema.json"
+require_json_keys = ["title", "type", "required"]
+require_regex = ["\"violation_ids\""]
+
+[[file]]
+path = "schemas/audit-access.schema.json"
+require_json_keys = ["title", "type", "required"]
+require_regex = ["\"authorize\""]
+
+[[file]]
+path = "schemas/fixtures/decision.json"
+require_json_keys = ["schema_version", "outcome", "baseline_revision", "candidate_digest", "violations", "assessments"]
+
+[[file]]
+path = "schemas/fixtures/discovery.json"
+require_json_keys = ["schema_version", "kind", "candidates"]
+
+[[file]]
+path = "schemas/fixtures/audit-decision.json"
+require_json_keys = ["schema_version", "kind", "outcome", "violation_ids", "candidate_digest"]
+
+[[file]]
+path = "schemas/fixtures/audit-access.json"
+require_json_keys = ["schema_version", "kind", "action", "baseline_revision", "subject"]
+
+[[file]]
+path = "crates/rung-core/tests/contracts.rs"
+require_regex = ["decision.schema.json", "production contract"]
+forbid_regex = ["unwrap(", "expect(", "panic!", "TODO", "FIXME"]
