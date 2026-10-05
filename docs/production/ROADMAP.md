@@ -1,6 +1,6 @@
 # RUNG-PROD-001 roadmap
 
-Program status: open
+Program status: closed
 
 Production readiness is defined in `docs/production/DIRECTIVE.md`. A phase closes when its deliver spec exits 0 under `--strict`. The program closes when `deliver --spec deliver.toml --strict` exits 0, and this line then reads `Program status: closed`.
 
