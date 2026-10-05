@@ -7,7 +7,7 @@ phase = "P3"
 [[file]]
 path = "crates/rung-cli/tests/production_pilot.rs"
 require_regex = ["production_pilot_four_transcripts", "candidate_digest"]
-forbid_regex = ["unwrap(", "expect(", "panic!", "TODO", "FIXME"]
+forbid_regex = ["unwrap\\(", "expect\\(", "panic!", "TODO", "FIXME"]
 
 [[command]]
 name = "production pilot"

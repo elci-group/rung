@@ -1,0 +1,114 @@
+# RUNG-PROD-001 release gate.
+# Close the program with: deliver --spec deliver.toml --strict
+
+[metadata]
+program = "RUNG-PROD-001"
+phase = "P4"
+
+[[file]]
+path = "docs/production/DIRECTIVE.md"
+require_regex = ["RUNG-PROD-001", "deliver --spec deliver.toml --strict"]
+forbid_regex = ["TODO", "FIXME", "TBD"]
+
+[[file]]
+path = "docs/production/ROADMAP.md"
+require_regex = ["Program status: closed", "RUNG-PROD-001"]
+forbid_regex = ["TODO", "FIXME", "TBD"]
+
+[[file]]
+path = "Cargo.toml"
+require_regex = [
+  'repository = "https://github.com/elci-group/rung"',
+  'description = "Capability-preservation gate. Protected losses require a signed authorization against an accepted Git baseline."',
+]
+
+[[file]]
+path = "README.md"
+require_regex = ["cargo-semver-checks", "cargo-public-api", "Do not publish this workspace"]
+forbid_regex = ["TODO", "FIXME"]
+
+[[file]]
+path = "SECURITY.md"
+require_regex = ["cargo audit", "ed25519-dalek", "deliver.toml"]
+
+[[file]]
+path = ".github/workflows/ci.yml"
+require_regex = ["93a90de52b18e9e0a1dd7e89988d2d055c91cae6", "deliver --spec deliver.toml --strict", "name: CI"]
+
+[[file]]
+path = "schemas/decision.schema.json"
+require_json_keys = ["required", "properties"]
+
+[[file]]
+path = "schemas/discovery.schema.json"
+require_json_keys = ["required", "properties"]
+
+[[file]]
+path = "schemas/audit-decision.schema.json"
+require_json_keys = ["required"]
+
+[[file]]
+path = "schemas/audit-access.schema.json"
+require_json_keys = ["required"]
+
+[[file]]
+path = "schemas/fixtures/decision.json"
+require_json_keys = ["schema_version", "outcome", "candidate_digest"]
+
+[[file]]
+path = "schemas/fixtures/discovery.json"
+require_json_keys = ["schema_version", "kind", "candidates"]
+
+[[file]]
+path = "schemas/fixtures/audit-decision.json"
+require_json_keys = ["kind", "violation_ids", "candidate_digest"]
+
+[[file]]
+path = "schemas/fixtures/audit-access.json"
+require_json_keys = ["kind", "action", "subject"]
+
+[[file]]
+path = "crates/rung-core/tests/contracts.rs"
+forbid_regex = ["unwrap\\(", "expect\\(", "panic!"]
+
+[[file]]
+path = "crates/rung-cli/tests/production_pilot.rs"
+require_regex = ["production_pilot_four_transcripts"]
+forbid_regex = ["unwrap\\(", "expect\\(", "panic!"]
+
+[[command]]
+name = "cargo fmt"
+cmd = ["cargo", "fmt", "--check"]
+expect_exit = 0
+timeout_secs = 180
+
+[[command]]
+name = "cargo clippy"
+cmd = ["cargo", "clippy", "--workspace", "--all-targets", "--all-features", "--", "-D", "warnings"]
+expect_exit = 0
+timeout_secs = 900
+
+[[command]]
+name = "cargo test"
+cmd = ["cargo", "test", "--workspace", "--all-features"]
+expect_exit = 0
+timeout_secs = 900
+stdout_contains = ["test result: ok"]
+
+[[command]]
+name = "cargo doc"
+cmd = ["cargo", "doc", "--workspace", "--no-deps"]
+expect_exit = 0
+timeout_secs = 600
+
+[[command]]
+name = "cargo audit"
+cmd = ["cargo", "audit"]
+expect_exit = 0
+timeout_secs = 300
+
+[[command]]
+name = "cargo deny"
+cmd = ["cargo", "deny", "check", "licenses", "advisories"]
+expect_exit = 0
+timeout_secs = 300

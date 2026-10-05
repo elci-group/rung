@@ -43,4 +43,4 @@ require_json_keys = ["schema_version", "kind", "action", "baseline_revision", "s
 [[file]]
 path = "crates/rung-core/tests/contracts.rs"
 require_regex = ["decision.schema.json", "production contract"]
-forbid_regex = ["unwrap(", "expect(", "panic!", "TODO", "FIXME"]
+forbid_regex = ["unwrap\\(", "expect\\(", "panic!", "TODO", "FIXME"]
