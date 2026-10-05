@@ -7,33 +7,41 @@ use rung_model::{
 };
 use std::collections::BTreeMap;
 
-fn state(source_path: &str, source: &str, ledger: &Ledger) -> Snapshot {
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
+fn state(source_path: &str, source: &str, ledger: &Ledger) -> TestResult<Snapshot> {
     state_policy(source_path, source, ledger, &default_policy())
 }
 
-fn state_policy(source_path: &str, source: &str, ledger: &Ledger, policy: &Policy) -> Snapshot {
+fn state_policy(
+    source_path: &str,
+    source: &str,
+    ledger: &Ledger,
+    policy: &Policy,
+) -> TestResult<Snapshot> {
     let mut files = BTreeMap::new();
     files.insert(source_path.into(), source.as_bytes().to_vec());
     files.insert(
         ".rung/ledger.toml".into(),
-        toml::to_string(ledger).expect("ledger TOML").into_bytes(),
+        toml::to_string(ledger)?.into_bytes(),
     );
     files.insert(
         ".rung/policy.toml".into(),
-        toml::to_string(policy).expect("policy TOML").into_bytes(),
+        toml::to_string(policy)?.into_bytes(),
     );
-    Snapshot {
+    Ok(Snapshot {
         revision: "accepted-commit".into(),
         files,
-    }
+    })
 }
 
-fn authority(policy: &mut Policy, actor: &str, role: &str, key: &str) {
+fn authority(policy: &mut Policy, actor: &str, role: &str, key: &str) -> TestResult {
     policy.authorities.push(Authority {
         actor: actor.into(),
         role: role.into(),
-        public_key: public_key(key).expect("public key"),
+        public_key: public_key(key)?,
     });
+    Ok(())
 }
 
 fn record(
@@ -43,8 +51,8 @@ fn record(
     policy: &Policy,
     disposition: OmissionKind,
     successor: Option<String>,
-) -> Authorization {
-    Authorization {
+) -> TestResult<Authorization> {
+    Ok(Authorization {
         schema_version: 1,
         authorization_id: "AUTH-TEST".into(),
         created_at_unix_ms: 1,
@@ -52,22 +60,21 @@ fn record(
         disposition,
         baseline_revision: baseline.revision.clone(),
         candidate_digest: candidate.digest(),
-        ledger_digest: digest(&canonical(ledger).expect("ledger canonical")),
-        policy_digest: digest(&canonical(policy).expect("policy canonical")),
+        ledger_digest: digest(&canonical(ledger)?),
+        policy_digest: digest(&canonical(policy)?),
         reason: "approved change".into(),
         successor,
         migration: None,
         signatures: Vec::new(),
-    }
+    })
 }
 
-fn add_record(snapshot: &mut Snapshot, record: &Authorization) {
+fn add_record(snapshot: &mut Snapshot, record: &Authorization) -> TestResult {
     snapshot.files.insert(
         format!(".rung/authorizations/{}.toml", record.authorization_id),
-        toml::to_string(record)
-            .expect("authorization TOML")
-            .into_bytes(),
+        toml::to_string(record)?.into_bytes(),
     );
+    Ok(())
 }
 
 fn ledger() -> Ledger {
@@ -95,40 +102,43 @@ fn ledger() -> Ledger {
 }
 
 #[test]
-fn rename_keeps_capability_when_public_symbol_survives() {
+fn rename_keeps_capability_when_public_symbol_survives() -> TestResult {
     let ledger = ledger();
-    let baseline = state("src/old.rs", "pub fn feature_a() {}", &ledger);
-    let candidate = state("src/new.rs", "pub fn feature_a() {}", &ledger);
-    let decision = compare(&baseline, &candidate).expect("compare");
+    let baseline = state("src/old.rs", "pub fn feature_a() {}", &ledger)?;
+    let candidate = state("src/new.rs", "pub fn feature_a() {}", &ledger)?;
+    let decision = compare(&baseline, &candidate)?;
     assert_eq!(decision.outcome, EnforcementDecision::Allow);
     assert!(!decision.assessments[0].observations[0].found);
     assert!(decision.assessments[0].observations[1].found);
+    Ok(())
 }
 
 #[test]
-fn candidate_rung_downgrade_blocks_even_with_feature_present() {
+fn candidate_rung_downgrade_blocks_even_with_feature_present() -> TestResult {
     let ledger = ledger();
-    let baseline = state("src/old.rs", "pub fn feature_a() {}", &ledger);
+    let baseline = state("src/old.rs", "pub fn feature_a() {}", &ledger)?;
     let mut downgraded = ledger;
     downgraded.capabilities[0].rung = Rung::R1;
-    let candidate = state("src/old.rs", "pub fn feature_a() {}", &downgraded);
-    let decision = compare(&baseline, &candidate).expect("compare");
+    let candidate = state("src/old.rs", "pub fn feature_a() {}", &downgraded)?;
+    let decision = compare(&baseline, &candidate)?;
     assert_eq!(decision.outcome, EnforcementDecision::Block);
     assert!(decision.governance_violations[0].contains("GOV-RUNG-002"));
+    Ok(())
 }
 
 #[test]
-fn partial_evidence_requires_review_and_stays_closed() {
+fn partial_evidence_requires_review_and_stays_closed() -> TestResult {
     let mut ledger = ledger();
     ledger.capabilities[0].threshold = 2;
-    let baseline = state("src/old.rs", "pub fn feature_a() {}", &ledger);
-    let candidate = state("src/new.rs", "pub fn feature_a() {}", &ledger);
-    let decision = compare(&baseline, &candidate).expect("compare");
+    let baseline = state("src/old.rs", "pub fn feature_a() {}", &ledger)?;
+    let candidate = state("src/new.rs", "pub fn feature_a() {}", &ledger)?;
+    let decision = compare(&baseline, &candidate)?;
     assert_eq!(decision.outcome, EnforcementDecision::RequireReview);
+    Ok(())
 }
 
 #[test]
-fn supersession_requires_a_present_successor_and_signature() {
+fn supersession_requires_a_present_successor_and_signature() -> TestResult {
     let mut ledger = ledger();
     ledger.capabilities[0].evidence = vec![Evidence {
         kind: EvidenceKind::Symbol,
@@ -148,14 +158,14 @@ fn supersession_requires_a_present_successor_and_signature() {
     });
     let key = "11".repeat(32);
     let mut policy = default_policy();
-    authority(&mut policy, "alice", "developer", &key);
+    authority(&mut policy, "alice", "developer", &key)?;
     let baseline = state_policy(
         "src/lib.rs",
         "pub fn feature_a() {}\npub fn feature_b() {}",
         &ledger,
         &policy,
-    );
-    let mut candidate = state_policy("src/lib.rs", "pub fn feature_b() {}", &ledger, &policy);
+    )?;
+    let mut candidate = state_policy("src/lib.rs", "pub fn feature_b() {}", &ledger, &policy)?;
     let mut auth = record(
         &baseline,
         &candidate,
@@ -163,16 +173,17 @@ fn supersession_requires_a_present_successor_and_signature() {
         &policy,
         OmissionKind::Supersede,
         Some("CAP-B".into()),
-    );
-    sign_authorization(&mut auth, "alice", &key).expect("sign");
-    add_record(&mut candidate, &auth);
-    let decision = compare(&baseline, &candidate).expect("compare");
+    )?;
+    sign_authorization(&mut auth, "alice", &key)?;
+    add_record(&mut candidate, &auth)?;
+    let decision = compare(&baseline, &candidate)?;
     assert_eq!(decision.outcome, EnforcementDecision::Allow);
     assert!(decision.assessments[0].authorized);
+    Ok(())
 }
 
 #[test]
-fn r4_requires_two_distinct_maintainer_signatures() {
+fn r4_requires_two_distinct_maintainer_signatures() -> TestResult {
     let mut ledger = ledger();
     ledger.capabilities[0].rung = Rung::R4;
     ledger.capabilities[0].evidence = vec![Evidence {
@@ -183,10 +194,10 @@ fn r4_requires_two_distinct_maintainer_signatures() {
     let key_a = "11".repeat(32);
     let key_b = "22".repeat(32);
     let mut policy = default_policy();
-    authority(&mut policy, "alice", "maintainer", &key_a);
-    authority(&mut policy, "bob", "maintainer", &key_b);
-    let baseline = state_policy("src/lib.rs", "pub fn feature_a() {}", &ledger, &policy);
-    let mut candidate = state_policy("src/lib.rs", "", &ledger, &policy);
+    authority(&mut policy, "alice", "maintainer", &key_a)?;
+    authority(&mut policy, "bob", "maintainer", &key_b)?;
+    let baseline = state_policy("src/lib.rs", "pub fn feature_a() {}", &ledger, &policy)?;
+    let mut candidate = state_policy("src/lib.rs", "", &ledger, &policy)?;
     let mut auth = record(
         &baseline,
         &candidate,
@@ -194,17 +205,18 @@ fn r4_requires_two_distinct_maintainer_signatures() {
         &policy,
         OmissionKind::Omit,
         None,
-    );
-    sign_authorization(&mut auth, "alice", &key_a).expect("first signature");
-    add_record(&mut candidate, &auth);
+    )?;
+    sign_authorization(&mut auth, "alice", &key_a)?;
+    add_record(&mut candidate, &auth)?;
     assert_eq!(
-        compare(&baseline, &candidate).expect("compare").outcome,
+        compare(&baseline, &candidate)?.outcome,
         EnforcementDecision::Block
     );
-    sign_authorization(&mut auth, "bob", &key_b).expect("second signature");
-    add_record(&mut candidate, &auth);
+    sign_authorization(&mut auth, "bob", &key_b)?;
+    add_record(&mut candidate, &auth)?;
     assert_eq!(
-        compare(&baseline, &candidate).expect("compare").outcome,
+        compare(&baseline, &candidate)?.outcome,
         EnforcementDecision::Allow
     );
+    Ok(())
 }

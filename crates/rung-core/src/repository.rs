@@ -16,7 +16,10 @@ impl Snapshot {
     pub fn digest(&self) -> String {
         let mut hasher = Sha256::new();
         for (path, bytes) in &self.files {
-            if path.starts_with(".rung/authorizations/") {
+            // Authorization files and the audit trail are operational records.
+            // Including them would change the digest every time a signature is
+            // added or a check is recorded.
+            if path.starts_with(".rung/authorizations/") || path.starts_with(".rung/audit/") {
                 continue;
             }
             hasher.update(path.as_bytes());

@@ -96,6 +96,18 @@ Previous authorization files in the baseline cannot be removed or rewritten
 by a candidate without a governance violation. Each unresolved protected loss
 has a stable `RUNG-VIOLATION-*` ID with its missing evidence in JSON reports.
 
+`check` and `explain` append an audit record before returning. Decision
+records go to `.rung/audit/decisions.jsonl` and access records go to
+`.rung/audit/access.jsonl`. On Unix the directory is mode `0700` and each file
+is mode `0600`. A symlink on that path fails the command with exit code 3.
+The log keeps the current file and one previous generation (`*.jsonl.1`);
+the previous generation is removed after 90 days. Archive anything that must
+outlive that window. The candidate digest excludes `.rung/audit/`, so the log
+does not invalidate an authorization. Records contain outcome, revision,
+digests, and violation ids. They do not contain private keys. A bare
+repository has no worktree, so it does not receive this trail. `scan` does
+not write it.
+
 ## Ledger format
 
 ```toml
@@ -163,11 +175,22 @@ can permit a release. Decisions are schema-versioned in JSON and JSONL.
 ## Security limits and roadmap
 
 Git commit IDs make the baseline immutable, but the caller must choose a
-trusted ref. Rung cannot decide whether a branch called `main` is protected.
+trusted ref. Protect that ref in the forge: `main` on this repository requires
+a pull request, one approving review, and the `CI / rust` status check.
+Rung still cannot discover that protection by itself.
+
+The worktree walker and the Git tree walker both reject symbolic links,
+including Git mode `120000`. That rejection is required on every platform.
 The current scanner reads the worktree without a filesystem snapshot, so a
 concurrent modification during a check is outside the v0.1 integrity model.
-An organization should run checks in an isolated CI checkout, protect the
-baseline ref, and secure private signing keys.
+Run checks in an isolated CI checkout and keep private signing keys outside
+the repository.
+
+Observation uses `git2` (libgit2). `pkg-config` remains a build dependency of
+`libgit2-sys` and `libz-sys` in `Cargo.lock` because those crates always
+declare it. `cargo audit` is the vulnerability gate for the locked versions.
+`ed25519-dalek`, `git2`, `sha2`, `serde`, and `tracing` stay: they implement
+signatures, repository observation, digests, and decision reports.
 
 `rung scan` is deterministic discovery only. This version does not perform
 behavioural execution, semantic inference, or cross-language analysis. It does

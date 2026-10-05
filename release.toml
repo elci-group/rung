@@ -1,0 +1,14 @@
+schema_version = 1
+version = "0.1.0"
+artifact = "rung"
+channel = "main"
+
+# The release baseline is the accepted Git commit named by `rung check --against`.
+# A candidate's own ledger or policy cannot lower that baseline.
+baseline = "accepted-git-commit"
+
+# main accepts changes through a pull request with one approving review.
+# The required status check is the CI workflow job `CI / rust`.
+review_approvals = 1
+required_status_check = "CI / rust"
+force_push = false

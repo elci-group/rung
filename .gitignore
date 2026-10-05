@@ -1,4 +1,12 @@
 /target/
 **/__pycache__/
 **/.pytest_cache/
+.uni/
+.crush/
+.kaptaind/
+.lwoodz/
+lwoodz.toml
+poka.toml
+poka.lock
+traci.toml
 

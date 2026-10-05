@@ -4,6 +4,8 @@ use rung_model::{
 };
 use std::collections::BTreeMap;
 
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
 fn snapshot(files: &[(&str, &str)]) -> Snapshot {
     let mut stored = BTreeMap::new();
     for (path, text) in files {
@@ -15,7 +17,7 @@ fn snapshot(files: &[(&str, &str)]) -> Snapshot {
     }
 }
 
-fn governed(files: &[(&str, &str)], capability: Capability) -> Snapshot {
+fn governed(files: &[(&str, &str)], capability: Capability) -> TestResult<Snapshot> {
     let ledger = Ledger {
         schema_version: 1,
         capabilities: vec![capability],
@@ -23,15 +25,13 @@ fn governed(files: &[(&str, &str)], capability: Capability) -> Snapshot {
     let mut stored = snapshot(files);
     stored.files.insert(
         ".rung/ledger.toml".into(),
-        toml::to_string(&ledger).expect("ledger").into_bytes(),
+        toml::to_string(&ledger)?.into_bytes(),
     );
     stored.files.insert(
         ".rung/policy.toml".into(),
-        toml::to_string(&default_policy())
-            .expect("policy")
-            .into_bytes(),
+        toml::to_string(&default_policy())?.into_bytes(),
     );
-    stored
+    Ok(stored)
 }
 
 fn capability(kind: EvidenceKind, value: &str) -> Capability {
@@ -48,17 +48,16 @@ fn capability(kind: EvidenceKind, value: &str) -> Capability {
     }
 }
 
-fn ids(snapshot: &Snapshot) -> Vec<String> {
-    discover(snapshot)
-        .expect("discover")
+fn ids(snapshot: &Snapshot) -> TestResult<Vec<String>> {
+    Ok(discover(snapshot)?
         .candidates
         .into_iter()
         .map(|candidate| candidate.suggested_id)
-        .collect()
+        .collect())
 }
 
 #[test]
-fn scan_finds_reachable_surfaces_and_skips_private_modules() {
+fn scan_finds_reachable_surfaces_and_skips_private_modules() -> TestResult {
     let found = snapshot(&[
         (
             "src/lib.rs",
@@ -100,12 +99,12 @@ fn scan_finds_reachable_surfaces_and_skips_private_modules() {
             "[package]\nname = \"extra\"\nversion = \"0.1.0\"\n\n[features]\nextra_on = []\n",
         ),
     ]);
-    let report = discover(&found).expect("discover");
+    let report = discover(&found)?;
     assert!(report
         .candidates
         .windows(2)
         .all(|pair| pair[0].suggested_id <= pair[1].suggested_id));
-    let names = ids(&found);
+    let names = ids(&found)?;
     for id in [
         "api-feature-a",
         "api-service",
@@ -137,15 +136,16 @@ fn scan_finds_reachable_surfaces_and_skips_private_modules() {
         .candidates
         .iter()
         .find(|candidate| candidate.suggested_id == "api-feature-a")
-        .expect("feature candidate");
+        .ok_or("feature candidate")?;
     assert_eq!(
         feature.locations,
         vec!["src/api.rs".to_string(), "src/lib.rs".to_string()]
     );
+    Ok(())
 }
 
 #[test]
-fn path_attribute_module_is_public_and_private_copy_still_matches() {
+fn path_attribute_module_is_public_and_private_copy_still_matches() -> TestResult {
     let moved = snapshot(&[
         (
             "src/lib.rs",
@@ -154,21 +154,22 @@ fn path_attribute_module_is_public_and_private_copy_still_matches() {
         ("src/elsewhere.rs", "pub fn feature_a() {}\n"),
         ("src/hidden.rs", "pub fn secret() {}\n"),
     ]);
-    assert!(ids(&moved).contains(&"api-feature-a".to_string()));
-    assert!(!ids(&moved).iter().any(|id| id.contains("secret")));
+    assert!(ids(&moved)?.contains(&"api-feature-a".to_string()));
+    assert!(!ids(&moved)?.iter().any(|id| id.contains("secret")));
     let hidden = governed(
         &[
             ("src/lib.rs", "mod hidden;\n"),
             ("src/hidden.rs", "pub fn secret() {}\n"),
         ],
         capability(EvidenceKind::Symbol, "secret"),
-    );
-    let decision = compare(&hidden, &hidden).expect("private symbol");
+    )?;
+    let decision = compare(&hidden, &hidden)?;
     assert_eq!(decision.outcome, EnforcementDecision::Allow);
+    Ok(())
 }
 
 #[test]
-fn symbol_survives_move_into_inherent_method_and_tokio_test() {
+fn symbol_survives_move_into_inherent_method_and_tokio_test() -> TestResult {
     let ledger = Ledger {
         schema_version: 1,
         capabilities: vec![Capability {
@@ -196,33 +197,34 @@ fn symbol_survives_move_into_inherent_method_and_tokio_test() {
             "pub fn feature_a() {}\n#[test]\nfn feature_a_roundtrip() {}\n",
         )],
         ledger.capabilities[0].clone(),
-    );
+    )?;
     let candidate = governed(
         &[(
             "src/lib.rs",
             "pub struct Service;\nimpl Service { pub fn feature_a() {} }\n#[tokio::test]\nfn feature_a_roundtrip() {}\n",
         )],
         ledger.capabilities[0].clone(),
-    );
-    let decision = compare(&baseline, &candidate).expect("compare");
+    )?;
+    let decision = compare(&baseline, &candidate)?;
     assert_eq!(decision.outcome, EnforcementDecision::Allow);
     assert_eq!(
         decision.assessments[0].candidate,
         PresenceDisposition::Present
     );
+    Ok(())
 }
 
 #[test]
-fn route_loss_blocks_and_member_feature_matches() {
+fn route_loss_blocks_and_member_feature_matches() -> TestResult {
     let baseline = governed(
         &[("src/lib.rs", "#[get(\"/health\")]\nfn health() {}\n")],
         capability(EvidenceKind::Route, "get /health"),
-    );
+    )?;
     let candidate = governed(
         &[("src/lib.rs", "fn health() {}\n")],
         capability(EvidenceKind::Route, "get /health"),
-    );
-    let decision = compare(&baseline, &candidate).expect("compare");
+    )?;
+    let decision = compare(&baseline, &candidate)?;
     assert_eq!(decision.outcome, EnforcementDecision::Block);
     assert_eq!(
         decision.assessments[0].candidate,
@@ -240,8 +242,8 @@ fn route_loss_blocks_and_member_feature_matches() {
             ("src/lib.rs", "pub fn keep() {}\n"),
         ],
         capability(EvidenceKind::CargoFeature, "extra_on"),
-    );
-    let decision = compare(&bare, &bare).expect("feature compare");
+    )?;
+    let decision = compare(&bare, &bare)?;
     assert_eq!(decision.outcome, EnforcementDecision::Allow);
     let qualified = governed(
         &[
@@ -253,24 +255,31 @@ fn route_loss_blocks_and_member_feature_matches() {
             ("src/lib.rs", "pub fn keep() {}\n"),
         ],
         capability(EvidenceKind::CargoFeature, "extra/extra_on"),
-    );
-    let decision = compare(&qualified, &qualified).expect("qualified feature");
+    )?;
+    let decision = compare(&qualified, &qualified)?;
     assert_eq!(decision.outcome, EnforcementDecision::Allow);
+    Ok(())
 }
 
 #[test]
-fn invalid_route_evidence_is_configuration_failure() {
+fn invalid_route_evidence_is_configuration_failure() -> TestResult {
     let state = governed(
         &[("src/lib.rs", "pub fn feature_a() {}\n")],
         capability(EvidenceKind::Route, "health"),
-    );
-    let error = compare(&state, &state).expect_err("invalid route");
-    assert!(error.to_string().contains("route evidence"));
+    )?;
+    match compare(&state, &state) {
+        Err(error) => assert!(error.to_string().contains("route evidence")),
+        Ok(_) => return Err("invalid route was accepted".into()),
+    }
+    Ok(())
 }
 
 #[test]
-fn syntax_errors_fail_discovery() {
+fn syntax_errors_fail_discovery() -> TestResult {
     let broken = snapshot(&[("src/lib.rs", "pub fn {")]);
-    let error = discover(&broken).expect_err("syntax");
-    assert!(error.to_string().contains("src/lib.rs"));
+    match discover(&broken) {
+        Err(error) => assert!(error.to_string().contains("src/lib.rs")),
+        Ok(_) => return Err("syntax error was accepted".into()),
+    }
+    Ok(())
 }

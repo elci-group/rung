@@ -1,5 +1,6 @@
-//! Deterministic repository observation, comparison, policy, and authorization.
+//! Deterministic repository observation, comparison, policy, authorization, and audit.
 
+mod audit;
 mod authorization;
 mod discover;
 mod evidence;
@@ -233,13 +234,20 @@ pub fn check(
     against: &str,
     candidate_revision: Option<&str>,
 ) -> Result<Decision, RungError> {
+    if let Some(root) = repository.workdir() {
+        audit::record_access(root, audit::AccessAction::Check, against, None)?;
+    }
     let baseline = revision_snapshot(repository, against)
         .map_err(|e| RungError::Baseline(format!("cannot resolve {against}: {e}")))?;
     let candidate = match candidate_revision {
         Some(revision) => revision_snapshot(repository, revision)?,
         None => candidate_snapshot(repository)?,
     };
-    compare(&baseline, &candidate)
+    let decision = compare(&baseline, &candidate)?;
+    if let Some(root) = repository.workdir() {
+        audit::record_decision(root, &decision)?;
+    }
+    Ok(decision)
 }
 
 #[instrument(skip(baseline, candidate))]
@@ -500,5 +508,11 @@ pub fn write_authorization(root: &Path, authorization: &Authorization) -> Result
     let bytes =
         toml::to_string_pretty(authorization).map_err(|e| RungError::Config(e.to_string()))?;
     std::fs::write(dir.join(format!("{name}.toml")), bytes)?;
+    audit::record_access(
+        root,
+        audit::AccessAction::Authorize,
+        &authorization.baseline_revision,
+        Some(name),
+    )?;
     Ok(())
 }
