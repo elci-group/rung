@@ -43,6 +43,10 @@ The root spec repeats the file contracts so a single command is sufficient for r
 
 `deliver` reads files and runs commands. It does not commit, push, sign an authorization, or decide a capability. `rung check` remains the authority on protected loss.
 
+## Update path
+
+[Theosis](https://github.com/elci-group/theosis) is the updater for an installed `rung` binary. It reads a literal `A.B.C` from the first `[package]` table in the root `Cargo.toml`, then asks `baby` to install. This repository keeps that literal on package `rung-dist` (`publish = false`) equal to `[workspace.package].version` and to `VERSION`. `.baby.toml` is the recipe theosis passes to baby, and it builds `--bin rung -p rung`. Theosis does not decide a capability. Exit `10` from `theosis check` means the installed binary is newer than the remote and must not be overwritten.
+
 ## Standing prohibitions
 
 1. `rung-model` stays free of CLI and Git. `check`, `explain`, and `scan` stay free of models, network calls, and semantic inference.

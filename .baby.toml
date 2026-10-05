@@ -1,0 +1,7 @@
+schema = "baby.install/v1"
+build_system = "cargo"
+binary = "rung"
+artifact = "target/release/rung"
+commands = [
+  ["cargo", "build", "--release", "--bin", "rung", "-p", "rung"],
+]

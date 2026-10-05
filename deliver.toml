@@ -7,7 +7,7 @@ phase = "P4"
 
 [[file]]
 path = "docs/production/DIRECTIVE.md"
-require_regex = ["RUNG-PROD-001", "deliver --spec deliver.toml --strict"]
+require_regex = ["RUNG-PROD-001", "deliver --spec deliver.toml --strict", "theosis"]
 forbid_regex = ["TODO", "FIXME", "TBD"]
 
 [[file]]
@@ -20,11 +20,17 @@ path = "Cargo.toml"
 require_regex = [
   'repository = "https://github.com/elci-group/rung"',
   'description = "Capability-preservation gate. Protected losses require a signed authorization against an accepted Git baseline."',
+  'name = "rung-dist"',
+  'publish = false',
 ]
 
 [[file]]
+path = ".baby.toml"
+require_regex = ["baby.install/v1", 'binary = "rung"', "--bin", "rung"]
+
+[[file]]
 path = "README.md"
-require_regex = ["cargo-semver-checks", "cargo-public-api", "Do not publish this workspace"]
+require_regex = ["cargo-semver-checks", "cargo-public-api", "Do not publish this workspace", "theosis check"]
 forbid_regex = ["TODO", "FIXME"]
 
 [[file]]

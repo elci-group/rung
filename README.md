@@ -166,7 +166,20 @@ three. Rung does not replace the other two.
 
 ## Distribution
 
-Install from a checkout:
+Update an installed `rung` with [theosis](https://github.com/elci-group/theosis).
+Theosis reads the literal `A.B.C` in the root `[package]` table, compares it
+with `rung --version`, and refuses to downgrade. `theosis update` builds
+through the `.baby.toml` recipe, which installs the `rung` binary. The root
+package `rung-dist` is that version anchor. It is not the binary and it is
+not published.
+
+```sh
+theosis check --remote git@github.com:elci-group/rung.git --binary ~/.local/bin/rung
+theosis update --remote git@github.com:elci-group/rung.git --ref main \
+  --binary ~/.local/bin/rung --install-dir ~/.local/bin
+```
+
+A checkout can still be installed directly:
 
 ```sh
 cargo install --path crates/rung-cli

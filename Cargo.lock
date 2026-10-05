@@ -560,6 +560,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "rung-dist"
+version = "0.1.0"
+
+[[package]]
 name = "rung-model"
 version = "0.1.0"
 dependencies = [
