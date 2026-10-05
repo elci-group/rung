@@ -2,7 +2,7 @@
 
 **Program.** Bring `github.com/elci-group/rung` to production readiness at version `0.1.0`.
 **Baseline at issue.** `origin/main` before this program.
-**Acceptance tool.** [`deliver`](https://github.com/elci-group/deliver) `0.3.0`, commit `93a90de52b18e9e0a1dd7e89988d2d055c91cae6`.
+**Acceptance tool.** [`deliver`](https://github.com/elci-group/deliver) `0.2.0`, commit `93a90de52b18e9e0a1dd7e89988d2d055c91cae6`.
 **Completion command.** `deliver --spec deliver.toml --strict` from the repository root. Exit 0 is the only completion signal.
 
 This directive is the order for the production program. `docs/production/ROADMAP.md` is the phase plan. Each phase has its own spec under `deliver/`. The root `deliver.toml` is the union and the release gate. A phase is closed only after its spec passes with `--strict`. The program is closed only after the root spec passes.
