@@ -12,15 +12,10 @@ jobs:
         with:
           toolchain: 1.98.1
           components: clippy, rustfmt
-      - run: cargo fmt --check
-      - run: cargo clippy --workspace --all-targets --all-features -- -D warnings
-      - run: cargo test --workspace --all-features
-      - run: cargo doc --workspace --no-deps
-      - name: Audit dependencies
+      - name: Install the production gate
         run: |
+          cargo install --git https://github.com/elci-group/deliver --rev 93a90de52b18e9e0a1dd7e89988d2d055c91cae6 --locked --bin deliver
           cargo install cargo-audit --locked
-          cargo audit
-      - name: Check dependency licenses
-        run: |
           cargo install cargo-deny --locked
-          cargo deny check licenses advisories
+      - name: Run the production gate
+        run: deliver --spec deliver.toml --strict

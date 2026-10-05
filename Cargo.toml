@@ -7,6 +7,8 @@ version = "0.1.0"
 edition = "2021"
 license = "MIT"
 rust-version = "1.85"
+description = "Capability-preservation gate. Protected losses require a signed authorization against an accepted Git baseline."
+repository = "https://github.com/elci-group/rung"
 
 [workspace.dependencies]
 serde = { version = "1.0", features = ["derive"] }

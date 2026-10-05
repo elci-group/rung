@@ -156,6 +156,33 @@ The resolver reports every found and missing observation and a bounded
 confidence score based on observed weight. Multiple evidence types can
 preserve a capability through a file move or implementation rewrite.
 
+## Adjacent tools
+
+`cargo-semver-checks` reports semver breaks for a published Rust crate.
+`cargo-public-api` diffs public Rust items. Rung decides whether an
+organization-defined capability survived, and it requires a signed
+authorization before a protected loss is allowed. A library crate can run all
+three. Rung does not replace the other two.
+
+## Distribution
+
+Install from a checkout:
+
+```sh
+cargo install --path crates/rung-cli
+```
+
+Do not publish this workspace to crates.io. The crate names `rung` 0.2.0,
+`rung-cli` 1.0.0, and `rung-core` 1.0.0 already belong to other projects.
+That lookup was current on 2026-10-05. A future publish needs a new name and
+a fresh lookup.
+
+## Production gate
+
+`deliver --spec deliver.toml --strict` is the completion check. The order and
+the phase specs are in `docs/production/DIRECTIVE.md` and
+`docs/production/ROADMAP.md`.
+
 ## Exit codes
 
 | Code | Meaning |

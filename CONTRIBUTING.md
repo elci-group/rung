@@ -7,11 +7,10 @@ only parse arguments, call the core, and render its decision.
 Run before submitting changes:
 
 ```sh
-cargo fmt --check
-cargo clippy --workspace --all-targets --all-features -- -D warnings
-cargo test --workspace --all-features
-cargo doc --workspace --no-deps
+deliver --spec deliver.toml --strict
 ```
+
+That command runs `cargo fmt --check`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, `cargo test --workspace --all-features`, `cargo doc --workspace --no-deps`, `cargo audit`, and `cargo deny check licenses advisories`. The phase specs under `deliver/` are the planning contracts for `docs/production/ROADMAP.md`.
 
 Add an integration fixture for changes to baseline selection, governance,
 authorization, or exit semantics. Never commit a private signing key.

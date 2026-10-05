@@ -23,6 +23,9 @@ the action, outcome, baseline revision, candidate digest, and violation ids.
 It does not record private keys. `scan` does not write the trail.
 
 `cargo audit` against `Cargo.lock` is the supply-chain vulnerability check.
+The production acceptance gate is `deliver --spec deliver.toml --strict`,
+which runs `cargo audit` and `cargo deny check licenses advisories` with the
+fmt, clippy, test, and doc gates.
 Historical advisory counts attached to a crate name are not a finding against
 the locked version. Signature, Git, and digest crates stay in the build.
 
